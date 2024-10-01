@@ -72,6 +72,8 @@ app.post('/login',async(req,res)=>{
     
     bcrypt.compare(password, check.password,(err,result)=>{
         if(result){
+            let token = jwt.sign({email:email,userid:check._id},"system");
+            res.cookie("token",token);
             res.status(200).send("You have successfully authenticated");
         }
         else{
@@ -81,6 +83,24 @@ app.post('/login',async(req,res)=>{
     })
 })
 
+app.get('/dashboard',isLoggedIn,(req,res)=>{
+    console.log(req.user);
+    res.render('login');
+})
+
+function isLoggedIn(req,res,next){
+    let token = req.cookies.token;
+    if(token===""){
+        return res.redirect('/login');
+    }
+    jwt.verify(token, "system", (err, decodedToken) => {
+        if (err) {
+            return res.redirect('/login');
+        }
+        req.user = decodedToken;
+        next();
+    });
+}
 app.listen(port, ()=>{
     console.log(`Server running at http://localhost:${port}`)
 })
